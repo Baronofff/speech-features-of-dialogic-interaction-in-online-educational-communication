@@ -235,5 +235,5 @@ class Pipeline:
 
 
 if __name__ == "__main__":
-    pipeline = Pipeline('research_corpus_seminars.xml', 'dialogic_units.csv')
+    pipeline = Pipeline('materials/research_corpus_seminars.xml', 'materials/dialogic_units.csv')
     pipeline.run()
