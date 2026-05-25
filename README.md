@@ -72,7 +72,7 @@
 
 ### Базовые распределения (визуализация)
 
-![Базовые распределения](diagrams/basic_distributions.png)
+![Базовые распределения](visualizations/basic_distributions.png)
 
 ---
 
@@ -81,7 +81,7 @@
 - Размерность one‑hot матрицы: **154 × 37**  
 - **Тепловая карта корреляций**
 
-![Тепловая карта корреляций](diagrams/cramers_v_heatmap.png)
+![Тепловая карта корреляций](visualizations/cramers_v_heatmap.png)
 
 ### Сильные корреляции (Cramér's V > 0,5)
 
@@ -131,7 +131,7 @@
 
 ### Диаграмма состава кластеров
 
-![Диаграмма состава кластеров](diagrams/cluster_composition.png)
+![Диаграмма состава кластеров](visualizations/cluster_composition.png)
 
 ---
 
@@ -139,6 +139,6 @@
 
 - Доля объяснённой дисперсии первыми двумя компонентами: **18,5% + 15,2% = 33,7%**  
 
-![PCA-визуализация кластеров](diagrams/clusters_pca.png)
+![PCA-визуализация кластеров](visualizations/clusters_pca.png)
 
 ---
