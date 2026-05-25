@@ -110,7 +110,7 @@
 
 ### График силуэта
 
-![График силуэта](silhouette_score_plot.png)
+![График силуэта](bin/silhouette_score_plot.png)
 
 ### Результат кластеризации
 
