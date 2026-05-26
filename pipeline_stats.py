@@ -1,7 +1,7 @@
 import pandas as pd
 import xml.etree.ElementTree as ET
 import re
-from collections import Counter
+from collections import Counter, defaultdict
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,9 +12,7 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 import scipy.stats as ss
 
-# ---------------------------
-# Вспомогательные функции
-# ---------------------------
+
 def count_words(text):
     if not text:
         return 0
@@ -42,9 +40,8 @@ def my_median(lst):
     else:
         return s[mid]
 
-# ---------------------------
-# 1. АНАЛИЗ XML
-# ---------------------------
+
+
 class XMLAnalyzer:
     def __init__(self, filepath):
         self.filepath = filepath
@@ -58,6 +55,20 @@ class XMLAnalyzer:
         self.de_word_counts = []
         self.de_turn_counts = []
 
+        self.de_positions = {'начало': 0, 'середина': 0, 'конец': 0}
+
+    @staticmethod
+    def _classify_position(index, total):
+        if total == 0:
+            return None
+        ratio = index / total
+        if ratio < 1/3:
+            return 'начало'
+        elif ratio < 2/3:
+            return 'середина'
+        else:
+            return 'конец'
+
     def analyze(self):
         tree = ET.parse(self.filepath)
         root = tree.getroot()
@@ -66,9 +77,14 @@ class XMLAnalyzer:
 
         for f in files:
             dus = f.findall('.//dialogic-unit')
-            self.total_dus += len(dus)
+            total_in_file = len(dus)
+            self.total_dus += total_in_file
 
-            for du in dus:
+            for idx, du in enumerate(dus):
+                zone = self._classify_position(idx, total_in_file)
+                if zone:
+                    self.de_positions[zone] += 1
+
                 turns = du.findall('turn')
                 de_turn_cnt = len(turns)
                 de_word_cnt = 0
@@ -116,9 +132,15 @@ class XMLAnalyzer:
             print(f"Средняя длина реплики (слов): {my_mean(self.turn_lengths):.2f}")
             print(f"Медианная длина реплики (слов): {my_median(self.turn_lengths):.2f}")
 
-# ---------------------------
-# 2. АНАЛИЗ CSV (базовая статистика)
-# ---------------------------
+        print("\n" + "=" * 60)
+        print("РАСПРЕДЕЛЕНИЕ ДИАЛОГИЧЕСКИХ ЕДИНИЦ ПО ПОЗИЦИИ В СЕМИНАРЕ")
+        print("=" * 60)
+        for zone in ['начало', 'середина', 'конец']:
+            cnt = self.de_positions.get(zone, 0)
+            print(f"ДЕ в {zone} семинаров: {cnt}")
+
+
+
 class CSVAnalyzer:
     def __init__(self, filepath):
         self.filepath = filepath
@@ -216,9 +238,8 @@ class CSVAnalyzer:
                 no = cnt.get('нет', 0)
                 print(f"\n{feature}: да – {yes} ({yes/self.total_rows*100:.1f}%), нет – {no} ({no/self.total_rows*100:.1f}%)")
 
-# ---------------------------
-# 3. КОРРЕЛЯЦИОННЫЙ АНАЛИЗ (Cramér's V)
-# ---------------------------
+
+
 class CorrelationAnalyzer:
     def __init__(self, df, ignore_cols=None):
         self.df = df
@@ -303,9 +324,8 @@ class CorrelationAnalyzer:
         self.plot_heatmap()
         self.print_top_correlations()
 
-# ---------------------------
-# 4. КЛАСТЕРИЗАЦИЯ
-# ---------------------------
+
+
 class ClusteringAnalyzer:
     def __init__(self, df, ignore_cols=None):
         self.df = df
@@ -411,9 +431,7 @@ class ClusteringAnalyzer:
         self.pca_visualize()
         self.print_cluster_composition()
 
-# ---------------------------
-# 5. БАЗОВАЯ ВИЗУАЛИЗАЦИЯ (распределения)
-# ---------------------------
+
 class BasicVisualizer:
     def __init__(self, df):
         self.df = df
@@ -447,41 +465,36 @@ class BasicVisualizer:
     def run(self):
         self.plot_distributions()
 
-# ---------------------------
-# 6. ПАЙПЛАЙН (последовательный запуск)
-# ---------------------------
+
+
 class Pipeline:
     def __init__(self, xml_path, csv_path):
         self.xml_path = xml_path
         self.csv_path = csv_path
 
     def run(self):
-        # 1. Анализ XML
         xml_analyzer = XMLAnalyzer(self.xml_path)
         xml_analyzer.analyze()
         xml_analyzer.print_stats()
 
-        # 2. Базовая статистика CSV
         csv_analyzer = CSVAnalyzer(self.csv_path)
         csv_analyzer.analyze()
         csv_analyzer.print_stats()
         csv_analyzer.print_additional_stats()
 
-        # 3. Корреляционный анализ
         corr_analyzer = CorrelationAnalyzer(csv_analyzer.df)
         corr_analyzer.run()
 
-        # 4. Кластеризация
         clust_analyzer = ClusteringAnalyzer(csv_analyzer.df)
         clust_analyzer.run()
 
-        # 5. Базовые графики распределений
         viz = BasicVisualizer(csv_analyzer.df)
         viz.run()
 
         print("\n" + "=" * 60)
         print("ВСЕ АНАЛИЗЫ УСПЕШНО ЗАВЕРШЕНЫ")
         print("=" * 60)
+
 
 if __name__ == "__main__":
     pipeline = Pipeline('materials/research_corpus_seminars.xml', 'materials/dialogic_units.csv')
